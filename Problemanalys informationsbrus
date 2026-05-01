@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Informationsbrus inom investeringar — problemanalys</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F4F0E7;
+    --surface: #FBF8F1;
+    --surface-deep: #EDE6D7;
+    --ink: #1A1612;
+    --ink-soft: #3D3631;
+    --ink-mute: #7A716A;
+    --line: #D5CCBE;
+    --line-soft: #E5DDCD;
+
+    --gold: #B5904A;
+    --gold-deep: #8C6C2C;
+    --gold-tint: rgba(181, 144, 74, 0.07);
+
+    --rust: #9C5530;
+    --rust-deep: #7A4022;
+    --rust-tint: rgba(156, 85, 48, 0.06);
+    --rust-tint-strong: rgba(156, 85, 48, 0.12);
+
+    --slate: #4A6B7C;
+    --slate-tint: rgba(74, 107, 124, 0.07);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Geist', system-ui, sans-serif;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.55;
+  }
+
+  body {
+    background-image:
+      radial-gradient(circle at 14% 6%, rgba(181, 144, 74, 0.05) 0%, transparent 38%),
+      radial-gradient(circle at 92% 90%, rgba(74, 107, 124, 0.04) 0%, transparent 42%);
+    min-height: 100vh;
+    padding: 64px 32px 96px;
+  }
+
+  .page { max-width: 1240px; margin: 0 auto; }
+
+  /* ===== HEADER ===== */
+  header.top {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 48px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 32px;
+  }
+  .eyebrow {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .eyebrow .dot {
+    width: 6px; height: 6px;
+    background: var(--rust);
+    border-radius: 50%;
+  }
+  .eyebrow span.divider {
+    width: 1px; height: 12px;
+    background: var(--line);
+  }
+  .meta-block {
+    text-align: right;
+    font-family: 'Geist Mono', monospace;
+    font-size: 10.5px;
+    line-height: 1.9;
+    color: var(--ink-mute);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* ===== HERO ===== */
+  .hero {
+    padding: 80px 0 100px;
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 60px;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 80px;
+  }
+  h1.hero-title {
+    font-family: 'Instrument Serif', serif;
+    font-weight: 400;
+    font-size: 88px;
+    line-height: 0.95;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+  }
+  h1.hero-title em {
+    font-style: italic;
+    color: var(--rust);
+    display: inline-block;
+  }
+  .hero-sub {
+    font-size: 18px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+    margin-top: 28px;
+    max-width: 540px;
+  }
+  .hero-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 32px;
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    padding: 12px 18px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 100px;
+  }
+  .pill-stat {
+    color: var(--rust);
+    font-weight: 500;
+  }
+  .pill-divider {
+    width: 1px;
+    height: 12px;
+    background: var(--line);
+  }
+
+  .hero-viz {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    max-width: 420px;
+    justify-self: end;
+  }
+
+  /* ===== SECTION HEADERS ===== */
+  .section { margin-bottom: 96px; }
+
+  .sec-head {
+    margin-bottom: 44px;
+    max-width: 720px;
+  }
+  .sec-label {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .sec-label .num {
+    color: var(--rust);
+    font-weight: 500;
+  }
+  .sec-label .dash {
+    width: 24px; height: 1px;
+    background: var(--ink-mute);
+  }
+  .sec-title {
+    font-family: 'Instrument Serif', serif;
+    font-weight: 400;
+    font-size: 44px;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 14px;
+  }
+  .sec-title em { font-style: italic; }
+  .sec-sub {
+    font-size: 15px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+
+  /* ===== INVESTOR VOICES ===== */
+  .voices-wrap {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 48px;
+  }
+  .quotes-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .quote {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 28px 28px 24px;
+    position: relative;
+    transition: all 0.25s ease;
+  }
+  .quote::before {
+    content: '"';
+    font-family: 'Instrument Serif', serif;
+    font-size: 64px;
+    line-height: 1;
+    color: var(--rust);
+    position: absolute;
+    top: 14px;
+    right: 22px;
+    opacity: 0.4;
+  }
+  .quote:hover {
+    border-color: var(--rust);
+    transform: translateY(-2px);
+  }
+  .quote-text {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 19px;
+    line-height: 1.4;
+    color: var(--ink);
+    margin-bottom: 20px;
+    padding-right: 24px;
+  }
+  .quote-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-mute);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .quote-meta::before {
+    content: '';
+    width: 16px; height: 1px;
+    background: var(--ink-mute);
+  }
+  .quote-tall { grid-column: 1 / -1; }
+  .quote-tall .quote-text { font-size: 22px; }
+
+  .voices-side {
+    background: var(--ink);
+    color: var(--bg);
+    border-radius: 4px;
+    padding: 36px 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .voices-side::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 80% 20%, rgba(181, 144, 74, 0.18) 0%, transparent 55%);
+    pointer-events: none;
+  }
+  .side-label {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 14px;
+    position: relative;
+    z-index: 1;
+  }
+  .side-headline {
+    font-family: 'Instrument Serif', serif;
+    font-size: 28px;
+    line-height: 1.15;
+    color: var(--bg);
+    margin-bottom: 24px;
+    position: relative;
+    z-index: 1;
+  }
+  .side-headline em { font-style: italic; color: var(--gold); }
+  .side-stat {
+    padding: 20px 0;
+    border-top: 1px solid rgba(245, 240, 231, 0.15);
+    position: relative;
+    z-index: 1;
+  }
+  .side-stat:first-of-type { border-top: none; padding-top: 0; }
+  .side-figure {
+    font-family: 'Instrument Serif', serif;
+    font-size: 44px;
+    line-height: 1;
+    color: var(--gold);
+    margin-bottom: 6px;
+    letter-spacing: -0.02em;
+  }
+  .side-text {
+    font-size: 13px;
+    color: rgba(245, 240, 231, 0.78);
+    line-height: 1.45;
+  }
+  .side-source {
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(245, 240, 231, 0.15);
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(245, 240, 231, 0.55);
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ===== EXTERNAL DATA ===== */
+  .data-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  .data-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 32px 30px;
+  }
+  .data-card-tag {
+    display: inline-block;
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 2px;
+    margin-bottom: 22px;
+  }
+  .tag-volume { background: var(--gold-tint); color: var(--gold-deep); }
+  .tag-conflict { background: var(--rust-tint-strong); color: var(--rust-deep); }
+  .tag-avoid { background: var(--slate-tint); color: var(--slate); }
+
+  .data-aspect {
+    font-family: 'Instrument Serif', serif;
+    font-size: 26px;
+    line-height: 1.15;
+    margin-bottom: 16px;
+    letter-spacing: -0.01em;
+  }
+  .data-desc {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--line);
+  }
+  .data-stat { margin-bottom: 16px; }
+  .data-stat:last-child { margin-bottom: 0; }
+  .data-figure {
+    font-family: 'Instrument Serif', serif;
+    font-size: 38px;
+    line-height: 1;
+    margin-bottom: 6px;
+    letter-spacing: -0.02em;
+  }
+  .data-card.volume .data-figure { color: var(--gold-deep); }
+  .data-card.conflict .data-figure { color: var(--rust); }
+  .data-card.avoid .data-figure { color: var(--slate); }
+  .data-figure .unit { font-size: 22px; opacity: 0.7; }
+  .data-stat-text {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.45;
+  }
+  .data-source {
+    font-family: 'Geist Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-top: 4px;
+  }
+
+  /* ===== U-CURVE ===== */
+  .curve-wrap {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 48px;
+  }
+  .curve-grid {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 56px;
+    align-items: center;
+  }
+  .curve-svg { width: 100%; height: auto; }
+
+  .curve-side .side-block {
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--line);
+  }
+  .curve-side .side-block:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0;
+  }
+  .side-block-label {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .side-block-label .swatch {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+  }
+  .side-block-label.active .swatch { background: var(--rust); }
+  .side-block-label.passive .swatch { background: var(--ink-mute); opacity: 0.6; }
+  .side-block-label.peak .swatch {
+    background: transparent;
+    border: 1.5px dashed var(--rust);
+  }
+  .side-block-name {
+    font-size: 14px;
+    color: var(--ink);
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .side-block-detail {
+    font-size: 12px;
+    color: var(--ink-mute);
+    line-height: 1.5;
+  }
+
+  /* ===== COST ===== */
+  .cost-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .cost-cell {
+    background: var(--surface);
+    padding: 38px 36px;
+    transition: background 0.2s ease;
+  }
+  .cost-cell.feature {
+    background: var(--ink);
+    color: var(--bg);
+    position: relative;
+    overflow: hidden;
+  }
+  .cost-cell.feature::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 90% 10%, rgba(156, 85, 48, 0.22) 0%, transparent 55%);
+  }
+  .cost-cell:not(.feature):hover { background: var(--surface-deep); }
+
+  .cost-label {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .cost-cell.feature .cost-label { color: var(--gold); }
+  .cost-fig {
+    font-family: 'Instrument Serif', serif;
+    line-height: 1;
+    letter-spacing: -0.025em;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .cost-cell.feature .cost-fig { font-size: 92px; color: var(--bg); }
+  .cost-cell:not(.feature) .cost-fig { font-size: 56px; color: var(--rust); }
+  .cost-cell.feature .cost-fig em { font-style: italic; color: var(--gold); }
+  .cost-fig .cost-unit { font-size: 0.45em; color: var(--ink-mute); margin-left: 4px; }
+  .cost-cell.feature .cost-fig .cost-unit { color: var(--gold); opacity: 0.85; }
+
+  .cost-headline {
+    font-family: 'Instrument Serif', serif;
+    font-size: 22px;
+    line-height: 1.3;
+    color: var(--ink);
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .cost-cell.feature .cost-headline { color: var(--bg); font-size: 26px; }
+  .cost-desc {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+    position: relative;
+  }
+  .cost-cell.feature .cost-desc { color: rgba(245, 240, 231, 0.72); font-size: 13.5px; }
+  .cost-source {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-top: 16px;
+    position: relative;
+  }
+  .cost-cell.feature .cost-source { color: rgba(245, 240, 231, 0.5); }
+
+  /* ===== FOOTER ===== */
+  .footer {
+    margin-top: 96px;
+    padding-top: 32px;
+    border-top: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 24px;
+    align-items: end;
+  }
+  .footer-text {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    line-height: 1.8;
+    max-width: 700px;
+  }
+  .footer-sig {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    text-align: right;
+    line-height: 1.8;
+  }
+  .footer-sig strong { color: var(--ink); font-weight: 500; }
+
+  @media (max-width: 1100px) {
+    .hero { grid-template-columns: 1fr; gap: 40px; padding: 56px 0 72px; }
+    h1.hero-title { font-size: 60px; }
+    .voices-wrap { grid-template-columns: 1fr; }
+    .quotes-grid { grid-template-columns: 1fr; }
+    .quote-tall { grid-column: 1; }
+    .data-grid { grid-template-columns: 1fr; }
+    .curve-grid { grid-template-columns: 1fr; }
+    .cost-grid { grid-template-columns: 1fr; }
+    .sec-title { font-size: 34px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <header class="top">
+    <div>
+      <div class="eyebrow">
+        <span class="dot"></span>
+        Problemanalys · Informationsbrus inom investeringar
+        <span class="divider"></span>
+        Maj 2026
+      </div>
+    </div>
+    <div class="meta-block">
+      <div>Forumdata · n=41 av 58</div>
+      <div>Extern forskning · 278 källor</div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div>
+      <h1 class="hero-title">För mycket information.<br>För få <em>filter.</em></h1>
+      <p class="hero-sub">Privatinvesterares främsta problem är inte tillgång till information — det är prioritering. Twitter, Reddit, finansmedia, analyser, Discord och AI-svar konkurrerar samtidigt om uppmärksamheten, ofta med motstridiga slutsatser. Detta är vad både kvalitativ forumdata och bred forskning visar.</p>
+      <div class="hero-pill">
+        <span><span class="pill-stat">71%</span> upplever problemet</span>
+        <span class="pill-divider"></span>
+        <span><span class="pill-stat">848 bp</span> avkastningstapp</span>
+        <span class="pill-divider"></span>
+        <span><span class="pill-stat">15 år</span> i rad</span>
+      </div>
+    </div>
+
+    <!-- HERO ILLUSTRATION -->
+    <svg class="hero-viz" viewBox="0 0 420 420" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#B5904A" stop-opacity="0.18"/>
+          <stop offset="60%" stop-color="#B5904A" stop-opacity="0.04"/>
+          <stop offset="100%" stop-color="#B5904A" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <circle cx="210" cy="210" r="180" fill="url(#centerGlow)"/>
+
+      <g opacity="0.45" stroke-linecap="round" fill="none" stroke-width="1.2">
+        <path d="M 20 60 Q 100 120 180 200" stroke="#9C5530"/>
+        <path d="M 50 30 Q 130 110 200 195" stroke="#7A716A"/>
+        <path d="M 380 40 Q 290 100 220 200" stroke="#9C5530"/>
+        <path d="M 410 90 Q 320 150 230 205" stroke="#4A6B7C"/>
+        <path d="M 30 380 Q 110 290 195 220" stroke="#7A716A"/>
+        <path d="M 70 410 Q 150 320 205 230" stroke="#9C5530"/>
+        <path d="M 380 380 Q 300 290 230 220" stroke="#4A6B7C"/>
+        <path d="M 410 320 Q 320 270 235 215" stroke="#7A716A"/>
+        <path d="M 200 10 Q 205 100 210 200" stroke="#9C5530"/>
+        <path d="M 10 200 Q 100 200 195 210" stroke="#4A6B7C"/>
+        <path d="M 410 200 Q 320 210 225 210" stroke="#7A716A"/>
+        <path d="M 210 410 Q 210 320 210 220" stroke="#9C5530"/>
+      </g>
+
+      <g>
+        <circle cx="20" cy="60" r="3" fill="#9C5530" opacity="0.7"/>
+        <circle cx="50" cy="30" r="3" fill="#7A716A" opacity="0.7"/>
+        <circle cx="380" cy="40" r="3" fill="#9C5530" opacity="0.7"/>
+        <circle cx="410" cy="90" r="3" fill="#4A6B7C" opacity="0.7"/>
+        <circle cx="30" cy="380" r="3" fill="#7A716A" opacity="0.7"/>
+        <circle cx="70" cy="410" r="3" fill="#9C5530" opacity="0.7"/>
+        <circle cx="380" cy="380" r="3" fill="#4A6B7C" opacity="0.7"/>
+        <circle cx="410" cy="320" r="3" fill="#7A716A" opacity="0.7"/>
+        <circle cx="200" cy="10" r="3" fill="#9C5530" opacity="0.7"/>
+        <circle cx="10" cy="200" r="3" fill="#4A6B7C" opacity="0.7"/>
+        <circle cx="410" cy="200" r="3" fill="#7A716A" opacity="0.7"/>
+        <circle cx="210" cy="410" r="3" fill="#9C5530" opacity="0.7"/>
+      </g>
+
+      <circle cx="210" cy="210" r="48" fill="#FBF8F1" stroke="#1A1612" stroke-width="1.3"/>
+      <text x="210" y="206" font-family="Instrument Serif, serif" font-style="italic" font-size="15" fill="#1A1612" text-anchor="middle">investeraren</text>
+      <text x="210" y="225" font-family="Geist Mono, monospace" font-size="9" fill="#7A716A" letter-spacing="1.2" text-anchor="middle">i bruset</text>
+
+      <text x="60" y="50" font-family="Geist Mono, monospace" font-size="9" fill="#7A716A" letter-spacing="0.5">X / Twitter</text>
+      <text x="345" y="35" font-family="Geist Mono, monospace" font-size="9" fill="#7A716A" letter-spacing="0.5" text-anchor="end">Substack</text>
+      <text x="395" y="115" font-family="Geist Mono, monospace" font-size="9" fill="#7A716A" letter-spacing="0.5" text-anchor="end">Discord</text>
+      <text x="395" y="345" font-family="Geist Mono, monospace" font-size="9" fill="#7A716A" letter-spacing="0.5" text-anchor="end">YouTube</text>
+      <text x="105" y="400" font-family="Geist Mono, monospace" font-size="9" fill="#7A716A" letter-spacing="0.5" text-anchor="end">Reddit</text>
+      <text x="20" y="395" font-family="Geist Mono, monospace" font-size="9" fill="#7A716A" letter-spacing="0.5">Podcasts</text>
+      <text x="35" y="220" font-family="Geist Mono, monospace" font-size="9" fill="#7A716A" letter-spacing="0.5" text-anchor="end" transform="rotate(-90 30 220)">Nyheter</text>
+      <text x="395" y="220" font-family="Geist Mono, monospace" font-size="9" fill="#7A716A" letter-spacing="0.5" transform="rotate(90 400 220)">Analyser</text>
+    </svg>
+  </section>
+
+  <!-- INVESTOR VOICES -->
+  <section class="section">
+    <div class="sec-head">
+      <div class="sec-label"><span class="num">01</span><span class="dash"></span>Vad investerare själva uttrycker</div>
+      <h2 class="sec-title">Inte tillgång. <em>Filtrering.</em></h2>
+      <p class="sec-sub">En genomgång av 58 oberoende svar från fyra investerarforum (Reddit, Aktiemarknaden, Placera, Trading) gav 41 unika svar som faktiskt besvarade frågan. Samma frustration återkom genomgående.</p>
+    </div>
+
+    <div class="voices-wrap">
+      <div class="quotes-grid">
+
+        <div class="quote quote-tall">
+          <p class="quote-text">It's not access to information — it's filtering. There's always another earnings take, macro headline, or thread explaining why something just moved. Most of it isn't useful. The hardest part isn't picking a ticker — it's figuring out what actually matters vs what's just noise.</p>
+          <div class="quote-meta">Reddit · aktiv investerare</div>
+        </div>
+
+        <div class="quote">
+          <p class="quote-text">Everyone has a chart, a thread, a take — and half of them contradict each other.</p>
+          <div class="quote-meta">Reddit · 1–5 år</div>
+        </div>
+
+        <div class="quote">
+          <p class="quote-text">Last 3 crashes I have ended up sitting on cash only to see the market recover very quickly.</p>
+          <div class="quote-meta">Reddit · stockpicker</div>
+        </div>
+
+        <div class="quote">
+          <p class="quote-text">Imagine a menu with hundreds of dishes — and all your friends shouting which one is best. That's the market right now.</p>
+          <div class="quote-meta">Reddit · erfaren</div>
+        </div>
+
+        <div class="quote">
+          <p class="quote-text">Jag missade 30–40 % avkastning för att jag läste för mycket och tvivlade hela tiden.</p>
+          <div class="quote-meta">Aktiemarknaden · svensk</div>
+        </div>
+
+      </div>
+
+      <div class="voices-side">
+        <div class="side-label">Mönstret i siffror</div>
+        <div class="side-headline">Av 41 unika svar — samma <em>frustration</em> återkommer.</div>
+
+        <div class="side-stat">
+          <div class="side-figure">71%</div>
+          <div class="side-text">uttrycker någon grad av problem med informationsbrus i sina egna ord</div>
+        </div>
+
+        <div class="side-stat">
+          <div class="side-figure">41%</div>
+          <div class="side-text">nämner uttryckligen "filtering", "noise" eller "för mycket info" oprovocerat</div>
+        </div>
+
+        <div class="side-stat">
+          <div class="side-figure">39%</div>
+          <div class="side-text">har ett tydligt problem som påverkar deras faktiska beteende — inte bara irritation</div>
+        </div>
+
+        <div class="side-source">
+          Källa · 41 unika svar<br>
+          (filtrerat från 58 råa)<br>
+          Reddit · Aktiemarknaden · Placera
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXTERNAL DATA -->
+  <section class="section">
+    <div class="sec-head">
+      <div class="sec-label"><span class="num">02</span><span class="dash"></span>Vad bred forskning visar</div>
+      <h2 class="sec-title">Tre konsistenta <em>mönster.</em></h2>
+      <p class="sec-sub">Extern data från Federal Reserve, FINRA, Vanguard och Reuters — alla mätningar specifikt kopplade till informationsmängd, motstridighet och konsumtionsbeteende.</p>
+    </div>
+
+    <div class="data-grid">
+
+      <div class="data-card volume">
+        <div class="data-card-tag tag-volume">Mängden</div>
+        <h3 class="data-aspect">För många källor parallellt</h3>
+        <p class="data-desc">Sociala medie-användare konsulterar nästan dubbelt så många informationskällor som de utan — utan att bli mer informerade.</p>
+
+        <div class="data-stat">
+          <div class="data-figure">7,6<span class="unit"> vs 4,0</span></div>
+          <div class="data-stat-text">källor i snitt: socialmedie­användare jämfört med övriga</div>
+          <div class="data-source">FINRA NFCS · 2 861 svar</div>
+        </div>
+        <div class="data-stat">
+          <div class="data-figure">60<span class="unit">%</span></div>
+          <div class="data-stat-text">av 18–34-åringar i USA använder sociala medier som primär investeringskälla</div>
+          <div class="data-source">FINRA NFCS 2024</div>
+        </div>
+      </div>
+
+      <div class="data-card conflict">
+        <div class="data-card-tag tag-conflict">Motstridigheten</div>
+        <h3 class="data-aspect">Källorna säger emot varandra</h3>
+        <p class="data-desc">Federal Reserve har dokumenterat att inkonsistent och spridd information uttömmer beslutskapaciteten — även när den absoluta volymen inte är hög.</p>
+
+        <div class="data-stat">
+          <div class="data-figure">42<span class="unit"> / 63</span></div>
+          <div class="data-stat-text">% rätt i kunskapstest mot % självskattad hög kunskap (finfluencer-följare)</div>
+          <div class="data-source">FINRA NFCS Investor Survey</div>
+        </div>
+        <div class="data-stat">
+          <div class="data-figure">↑↓</div>
+          <div class="data-stat-text">högre riskpremier mätbart kopplade till perioder av spretig information</div>
+          <div class="data-source">Federal Reserve IFDP 1372</div>
+        </div>
+      </div>
+
+      <div class="data-card avoid">
+        <div class="data-card-tag tag-avoid">Reaktionen</div>
+        <h3 class="data-aspect">Undvikande när bruset blir för mycket</h3>
+        <p class="data-desc">När informationen blir överbelastande slår investerare ifrån sig den — särskilt i de ögonblick då den hade behövts mest.</p>
+
+        <div class="data-stat">
+          <div class="data-figure">79<span class="unit">%</span></div>
+          <div class="data-stat-text">visar "strutsbeteende": loggar in mindre vid nedgång, mer vid uppgång</div>
+          <div class="data-source">Vanguard · 100 000 konton</div>
+        </div>
+        <div class="data-stat">
+          <div class="data-figure">39<span class="unit">%</span></div>
+          <div class="data-stat-text">undviker aktivt nyheter — upp från 29% år 2017</div>
+          <div class="data-source">Reuters Digital News 2024</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- WHO IT HITS -->
+  <section class="section">
+    <div class="sec-head">
+      <div class="sec-label"><span class="num">03</span><span class="dash"></span>Var problemet biter hårdast</div>
+      <h2 class="sec-title">Smärtan följer en <em>U-kurva.</em></h2>
+      <p class="sec-sub">Rena indexsparare och erfarna investerare med inarbetade system upplever låg smärta. Mellanskiktet — aktiva privatinvesterare med 1–5 års erfarenhet — sitter fast i bruset utan att ha byggt ett eget filter.</p>
+    </div>
+
+    <div class="curve-wrap">
+      <div class="curve-grid">
+
+        <svg class="curve-svg" viewBox="0 0 720 380" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="painFill2" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#9C5530" stop-opacity="0.16"/>
+              <stop offset="100%" stop-color="#9C5530" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+
+          <text x="20" y="38" font-family="Geist Mono, monospace" font-size="9" fill="#7A716A" letter-spacing="1.5">SMÄRTA</text>
+          <line x1="60" y1="50" x2="60" y2="300" stroke="#D5CCBE" stroke-width="1"/>
+          <text x="48" y="56" font-family="Geist Mono, monospace" font-size="9" fill="#7A716A" text-anchor="end">hög</text>
+          <text x="48" y="305" font-family="Geist Mono, monospace" font-size="9" fill="#7A716A" text-anchor="end">låg</text>
+
+          <line x1="60" y1="50" x2="680" y2="50" stroke="#E5DDCD" stroke-width="0.5" stroke-dasharray="2,4"/>
+          <line x1="60" y1="175" x2="680" y2="175" stroke="#E5DDCD" stroke-width="0.5" stroke-dasharray="2,4"/>
+          <line x1="60" y1="300" x2="680" y2="300" stroke="#E5DDCD" stroke-width="0.5" stroke-dasharray="2,4"/>
+
+          <line x1="60" y1="300" x2="680" y2="300" stroke="#D5CCBE" stroke-width="1"/>
+          <text x="60" y="325" font-family="Geist Mono, monospace" font-size="10" fill="#7A716A">Nybörjare</text>
+          <text x="270" y="325" font-family="Geist Mono, monospace" font-size="10" fill="#7A716A" text-anchor="middle">1–5 år</text>
+          <text x="470" y="325" font-family="Geist Mono, monospace" font-size="10" fill="#7A716A" text-anchor="middle">6–15 år</text>
+          <text x="680" y="325" font-family="Geist Mono, monospace" font-size="10" fill="#7A716A" text-anchor="end">Erfaren</text>
+          <text x="20" y="358" font-family="Geist Mono, monospace" font-size="9" fill="#7A716A" letter-spacing="1.5">ERFARENHET →</text>
+
+          <path d="M 80 130 Q 200 50, 270 60 Q 340 90, 470 180 Q 580 250, 660 275 L 660 300 L 80 300 Z" fill="url(#painFill2)"/>
+          <path d="M 80 130 Q 200 50, 270 60 Q 340 90, 470 180 Q 580 250, 660 275" fill="none" stroke="#9C5530" stroke-width="2.4" stroke-linecap="round"/>
+
+          <path d="M 80 282 Q 370 280, 660 280" fill="none" stroke="#A29B8E" stroke-width="1.8" stroke-dasharray="6,5" stroke-linecap="round"/>
+
+          <rect x="200" y="46" width="140" height="80" fill="#9C5530" fill-opacity="0.05" stroke="#9C5530" stroke-width="0.8" stroke-dasharray="3,3" opacity="0.7" rx="2"/>
+
+          <circle cx="270" cy="60" r="9" fill="#FBF8F1" stroke="#9C5530" stroke-width="2.5"/>
+          <circle cx="270" cy="60" r="4" fill="#9C5530"/>
+          <text x="270" y="32" font-family="Geist Mono, monospace" font-size="10" fill="#9C5530" letter-spacing="1.5" text-anchor="middle" font-weight="500">PEAK</text>
+
+          <circle cx="80" cy="130" r="6" fill="#FBF8F1" stroke="#9C5530" stroke-width="2"/>
+          <circle cx="80" cy="130" r="2.5" fill="#9C5530"/>
+          <text x="92" y="118" font-family="Geist, sans-serif" font-size="11" font-weight="500" fill="#1A1612">Nybörjare</text>
+          <text x="92" y="131" font-family="Geist Mono, monospace" font-size="9" fill="#7A716A">vet inte vad som är relevant</text>
+
+          <circle cx="470" cy="180" r="6" fill="#FBF8F1" stroke="#9C5530" stroke-width="2"/>
+          <circle cx="470" cy="180" r="2.5" fill="#9C5530"/>
+          <text x="478" y="168" font-family="Geist, sans-serif" font-size="11" font-weight="500" fill="#1A1612">Bygger system</text>
+          <text x="478" y="181" font-family="Geist Mono, monospace" font-size="9" fill="#7A716A">smärta sjunker över tid</text>
+
+          <circle cx="650" cy="276" r="6" fill="#FBF8F1" stroke="#9C5530" stroke-width="2"/>
+          <circle cx="650" cy="276" r="2.5" fill="#9C5530"/>
+          <text x="640" y="266" font-family="Geist, sans-serif" font-size="11" font-weight="500" fill="#1A1612" text-anchor="end">Har system</text>
+
+          <circle cx="370" cy="280" r="5" fill="#FBF8F1" stroke="#A29B8E" stroke-width="1.5"/>
+          <text x="385" y="283" font-family="Geist, sans-serif" font-size="11" font-weight="500" fill="#56504A">Passiva indexsparare — har valt bort problemet</text>
+        </svg>
+
+        <div class="curve-side">
+          <div class="side-block">
+            <div class="side-block-label peak"><span class="swatch"></span>Peakzonen</div>
+            <div class="side-block-name">Aktiva 1–5 år</div>
+            <div class="side-block-detail">Har lämnat indexet för att försöka överprestera, men har ännu inte byggt ett eget filter. Här är smärtan högst.</div>
+          </div>
+          <div class="side-block">
+            <div class="side-block-label active"><span class="swatch"></span>Den aktiva resan</div>
+            <div class="side-block-name">U-formad smärta</div>
+            <div class="side-block-detail">Smärtan börjar hög, peakar i mellanstadiet, och sjunker när investeraren själv lär sig vad som är brus.</div>
+          </div>
+          <div class="side-block">
+            <div class="side-block-label passive"><span class="swatch"></span>Den passiva vägen</div>
+            <div class="side-block-name">Indexsparare</div>
+            <div class="side-block-detail">Konstant låg smärta — har medvetet kopplat bort hela informationsflödet och accepterat marknadsavkastning.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- COST -->
+  <section class="section">
+    <div class="sec-head">
+      <div class="sec-label"><span class="num">04</span><span class="dash"></span>Mätbar konsekvens</div>
+      <h2 class="sec-title">Bruset syns på <em>avkastningen.</em></h2>
+      <p class="sec-sub">Beslutsbeteendet som bruset framkallar — fler trades än nödvändigt, panikförsäljningar, fördröjda köp — översätts till mätbart underliggande avkastningstapp år efter år.</p>
+    </div>
+
+    <div class="cost-grid">
+
+      <div class="cost-cell feature">
+        <div class="cost-label">Avkastningstapp</div>
+        <div class="cost-fig"><em>848</em><span class="cost-unit">bp</span></div>
+        <div class="cost-headline">Genomsnittsinvesterarens underprestation 2024</div>
+        <div class="cost-desc">Den aktiva privatinvesteraren tjänade 16,54 % medan S&amp;P 500 steg 25,05 %. Gapet drivs till stor del av just sådana beslut bruset utlöser: panik, byten, fel timing.</div>
+        <div class="cost-source">DALBAR QAIB 2025</div>
+      </div>
+
+      <div class="cost-cell">
+        <div class="cost-label">15 år i rad</div>
+        <div class="cost-fig">→</div>
+        <div class="cost-headline">Genomsnittsinvesteraren slår inte index</div>
+        <div class="cost-desc">DALBAR har mätt detta gap varje år sedan 2010. Det är systemiskt — inte slump.</div>
+        <div class="cost-source">DALBAR QAIB</div>
+      </div>
+
+      <div class="cost-cell">
+        <div class="cost-label">Värde av filtrering</div>
+        <div class="cost-fig">+150<span class="cost-unit">bp</span></div>
+        <div class="cost-headline">/år av rätt filtrerad disciplin</div>
+        <div class="cost-desc">Vanguard har isolerat värdet av "behavioral coaching" — det vill säga att hjälpa investerare ignorera bruset.</div>
+        <div class="cost-source">Vanguard Advisor's Alpha</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-text">
+      Datakällor: Forumdata · 41 unika svar (filtrerade från 58) · Reddit, Aktiemarknaden, Placera, Trading-forum.<br>
+      Extern forskning: 278 källor inkl. Federal Reserve IFDP 1372, DALBAR QAIB 2025,<br>
+      FINRA NFCS Investor Survey 2024, Vanguard, Reuters Digital News Report 2024.
+    </div>
+    <div class="footer-sig">
+      <strong>Problemanalys</strong><br>
+      v3.0 · Maj 2026
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
